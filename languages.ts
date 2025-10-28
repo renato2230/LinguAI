@@ -13,8 +13,3 @@ export const LANGUAGES: Language[] = [
   { code: 'it', name: 'Italiano', flag: '🇮🇹' },
   { code: 'ja', name: '日本語', flag: '🇯🇵' },
 ];
-
-export const TARGET_LANGUAGES: Language[] = [
-    { code: 'auto', name: 'Auto-Detect', flag: '🌐' },
-    ...LANGUAGES,
-];
