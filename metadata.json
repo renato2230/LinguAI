@@ -1,6 +1,6 @@
 {
-  "name": "linguAI",
-  "description": "linguAI is a real-time conversation translator powered by the Gemini Live API, designed to break down language barriers instantly.",
+  "name": "LinguAI",
+  "description": "LinguAI is a real-time conversation translator powered by the Gemini Live API, designed to break down language barriers instantly.",
   "requestFramePermissions": [
     "microphone"
   ]

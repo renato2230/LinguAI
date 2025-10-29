@@ -5,7 +5,7 @@ import {
   Modality,
   Blob,
 } from '@google/genai';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, RefObject } from 'react';
 import { Participant, TranscriptTurn } from '../types';
 import { Language } from '../languages';
 
@@ -189,7 +189,7 @@ export const useLiveSession = ({
         }
     } catch (error) {
         console.error("Error generating or playing TTS audio:", error);
-        onError("Failed to generate spoken translation.");
+        onError("Falha ao gerar a tradução falada.");
         isPlayingAudioRef.current = false;
         processAudioQueue();
     }
@@ -239,7 +239,7 @@ export const useLiveSession = ({
   const startSession = useCallback(async () => {
     if (isSessionActive || participants.length < 2) {
       if (participants.length < 2) {
-        onError("Please configure at least two participants for a conversation.");
+        onError("Por favor, configure pelo menos dois participantes para uma conversa.");
       }
       return;
     }
@@ -253,7 +253,7 @@ export const useLiveSession = ({
 
     try {
       if (!process.env.API_KEY) {
-        throw new Error('API_KEY environment variable not set.');
+        throw new Error('A variável de ambiente API_KEY não está definida.');
       }
       aiRef.current = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const systemInstruction = generateSystemInstruction(participants, languages);
@@ -285,7 +285,7 @@ export const useLiveSession = ({
               scriptProcessorRef.current.connect(inputAudioContextRef.current.destination);
             } catch (err) {
               console.error('Error getting user media:', err);
-              onError('Could not access microphone. Please check permissions.');
+              onError('Não foi possível acessar o microfone. Verifique as permissões.');
               stopSession();
             }
           },
@@ -298,19 +298,14 @@ export const useLiveSession = ({
               const fullResponse = currentOutputTranscriptionRef.current.trim();
               currentOutputTranscriptionRef.current = '';
 
-              // If the model produces no text (e.g., from a short pause or noise), just ignore this turn.
               if (!fullResponse) {
                 return;
               }
 
-              // The model sometimes wraps the JSON in markdown code blocks (```json ... ```).
-              // We need to extract the raw JSON string before parsing.
               let jsonStringToParse = fullResponse;
               const match = jsonStringToParse.match(/\{[\s\S]*\}/);
 
               if (!match) {
-                // This can happen if the model fails to understand and responds with conversational text
-                // instead of the requested JSON. We'll log it but won't show a disruptive error.
                 console.warn("Failed to find JSON object in the response from model. Response:", fullResponse);
                 return;
               }
@@ -327,7 +322,6 @@ export const useLiveSession = ({
                     return;
                 }
                 
-                // Finalize the last turn
                 let currentTranscript = [...transcriptHistoryRef.current];
                 const lastEntry = currentTranscript[currentTranscript.length - 1];
                 if (lastEntry && !lastEntry.isFinal) {
@@ -348,7 +342,6 @@ export const useLiveSession = ({
                 }
                 onTranscriptUpdate([...transcriptHistoryRef.current]);
 
-                // Queue audio for playback
                 for (const participant of participants) {
                     if (participant.languageCode !== detectedLanguage) {
                         const translatedText = translations[participant.languageCode];
@@ -361,13 +354,13 @@ export const useLiveSession = ({
 
               } catch (e) {
                 console.error("Failed to parse JSON response from model:", jsonStringToParse, e);
-                onError("Received an invalid response from the translator.");
+                onError("Recebida uma resposta inválida do tradutor.");
               }
             }
           },
           onerror: (e: ErrorEvent) => {
             console.error('Session error:', e);
-            onError(`Session error: ${e.message}`);
+            onError(`Erro na sessão: ${e.message}`);
             stopSession();
           },
           onclose: (e: CloseEvent) => {
@@ -375,7 +368,7 @@ export const useLiveSession = ({
           },
         },
         config: {
-          responseModalities: [Modality.AUDIO], // We must request audio, but we will ignore it and use TTS
+          responseModalities: [Modality.AUDIO], 
           outputAudioTranscription: {},
           inputAudioTranscription: {},
           systemInstruction,
@@ -383,7 +376,7 @@ export const useLiveSession = ({
       });
     } catch (error) {
       console.error('Failed to start session:', error);
-      let errorMessage = 'An unknown error occurred.';
+      let errorMessage = 'Ocorreu um erro desconhecido.';
       if (error instanceof Error) {
         errorMessage = error.message;
       }
@@ -400,5 +393,5 @@ export const useLiveSession = ({
     processAudioQueue
   ]);
 
-  return { isSessionActive, startSession, stopSession };
+  return { isSessionActive, startSession, stopSession, mediaStreamRef };
 };
